@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Fresas Av. Universidad</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Íconos de redes sociales (Font Awesome) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Tailwind por CDN (funciona sin build). Si ya usas Tailwind instalado, borra estas dos líneas -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="tailwind.config.js"></script>
+</head>
+
+<body>
+  <main class="mx-auto flex max-w-[480px] flex-col gap-7 py-7">
+
+    <!-- Zona que se desliza: toppings (izquierda) y hero (derecha) -->
+    <div id="viewport" class="overflow-hidden">
+      <div id="track" class="flex w-[200%] -translate-x-1/2 items-start transition-transform duration-500 ease-[cubic-bezier(.65,0,.35,1)] motion-reduce:transition-none">
+
+        <section id="toppingsScreen" inert class="flex h-0 w-1/2 flex-col gap-5 overflow-hidden px-5" aria-label="Toppings">
+          <button id="backBtn" type="button" class="flex items-center gap-1 self-start border-0 bg-transparent p-0 text-[0.9375rem] font-semibold text-rose-600">
+            <span class="text-3xl leading-none" aria-hidden="true">‹</span>Volver
+          </button>
+          <div>
+            <h2 class="m-0 font-display text-3xl font-extrabold leading-tight text-rose-600">Elige tus toppings</h2>
+            <p id="topHint" class="m-0 mt-1 text-sm text-rose-900/70"></p>
+          </div>
+          <div class="relative overflow-hidden rounded-3xl p-4">
+            <div id="oil" class="absolute inset-0 bg-rose-100" aria-hidden="true"></div>
+            <!-- pt y pb dan espacio para que el brillo de los toppings no se corte -->
+            <div id="topScroll" class="relative -mx-4 cursor-grab select-none overflow-x-auto px-4 pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div id="topRows" class="flex w-max flex-col gap-3"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="heroScreen" class="flex w-1/2 flex-col px-5 pb-10">
+          <!-- Texto e imagen comparten la misma celda: la altura la marca la imagen, el texto va arriba y las redes abajo -->
+          <header class="grid">
+            <div class="halo relative z-10 col-start-1 row-start-1 flex w-[56%] min-w-0 flex-col gap-2">
+              <h1 class="font-display text-5xl font-extrabold leading-none tracking-tight text-rose-600">Fresas</h1>
+              <p class="text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-rose-900/70">Postres · Fruta</p>
+              <a href="https://maps.app.goo.gl/jv686MCvtEfcYYXD7" target="_blank" rel="noopener"
+                 class="mt-1 text-sm font-medium underline decoration-rose-300 decoration-2 underline-offset-4 hover:decoration-rose-600">
+                C. Macedonio Alcalá 102, RUTA INDEPENDENCIA, Centro, 68000 Oaxaca de Juárez, Oax.
+              </a>
+              <a href="#pedido" class="mt-3 self-start rounded-full bg-rose-600 px-7 py-3.5 text-[1.0625rem] font-semibold text-white no-underline transition-transform [text-shadow:none] active:scale-[.97] motion-reduce:transition-none">Ordena ya</a>
+
+              <!-- Redes sociales, una por línea. Cambia el link y el usuario de cada una. Los logos son íconos de Font Awesome (clases fa-brands fa-...) -->
+              <nav aria-label="Redes sociales" class="mt-auto pt-6">
+                <ul class="m-0 flex list-none flex-col gap-2 p-0">
+                  <li>
+                    <a href="https://instagram.com/TU_USUARIO" target="_blank" rel="noopener" class="flex items-center gap-2 text-sm font-semibold text-rose-900 no-underline">
+                      <i class="fa-brands fa-instagram w-6 shrink-0 text-center text-xl text-rose-600" aria-hidden="true"></i>
+                      <span>@tu_usuario</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://facebook.com/TU_USUARIO" target="_blank" rel="noopener" class="flex items-center gap-2 text-sm font-semibold text-rose-900 no-underline">
+                      <i class="fa-brands fa-facebook w-6 shrink-0 text-center text-xl text-rose-600" aria-hidden="true"></i>
+                      <span>@tu_usuario</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://tiktok.com/@TU_USUARIO" target="_blank" rel="noopener" class="flex items-center gap-2 text-sm font-semibold text-rose-900 no-underline">
+                      <i class="fa-brands fa-tiktok w-6 shrink-0 text-center text-xl text-rose-600" aria-hidden="true"></i>
+                      <span>@tu_usuario</span>
+                    </a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+
+            <div class="col-start-1 row-start-1 w-[46%] justify-self-end">
+              <img src="img/fresas-hero.png" alt="Imagen de ejemplo" class="fade-left -rotate-12 scale-125 mt-10">
+            </div>
+          </header>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- Pedido: se queda fija, solo cambia el texto -->
+    <section id="pedido" aria-label="Arma tu pedido" class="scroll-mt-5 px-5">
+      <div id="tabs" role="tablist" aria-label="Sabores" class="relative z-10 grid grid-cols-3 items-end"></div>
+
+      <div id="panel" data-mode="a" role="tabpanel" class="flex flex-col gap-5 rounded-b-3xl bg-rose-100 p-5">
+
+        <div class="grid">
+          <p id="sizeName" aria-live="polite" class="txt-a col-start-1 row-start-1 m-0 text-center font-display text-2xl font-extrabold"></p>
+          <p class="txt-b col-start-1 row-start-1 m-0 text-left font-display text-2xl font-extrabold">Tu pedido</p>
+        </div>
+
+        <div>
+          <div class="cupgrid">
+            <div class="leftcol grid items-end">
+              <div class="txt-a col-start-1 row-start-1">
+                <button id="prev" type="button" aria-label="Tamaño más chico" class="flex min-h-16 w-full flex-col items-center justify-end border-0 bg-transparent pb-1 text-[0.9375rem] font-semibold disabled:invisible">
+                  <span class="text-4xl leading-none text-rose-600" aria-hidden="true">‹</span>
+                  <span id="prevLabel"></span>
+                </button>
+              </div>
+              <div class="txt-b col-start-1 row-start-1 text-left">
+                <p class="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-rose-900/70">Producto</p>
+                <p id="bName" class="m-0 font-display text-lg font-extrabold leading-tight"></p>
+                <p class="m-0 mt-4 text-xs font-semibold uppercase tracking-[0.08em] text-rose-900/70">Tamaño</p>
+                <p id="bSize" class="m-0 text-base font-semibold leading-tight"></p>
+                <p id="bPrice" class="m-0 font-display text-xl font-extrabold text-rose-600"></p>
+              </div>
+            </div>
+
+            <!-- El vaso y su lienzo de física los maneja cup.js. perspective da profundidad al giro de moneda -->
+            <div id="stage" class="relative h-[230px]" style="perspective: 700px">
+              <div id="cupWrap" class="absolute bottom-0 left-1/2">
+                <canvas id="fx" class="pointer-events-none absolute" aria-hidden="true"></canvas>
+                <img id="cupImg" alt="" class="absolute left-0 top-0 h-full w-full">
+              </div>
+            </div>
+
+            <div class="grid items-end">
+              <div class="txt-a col-start-1 row-start-1">
+                <button id="next" type="button" aria-label="Tamaño más grande" class="flex min-h-16 w-full flex-col items-center justify-end border-0 bg-transparent pb-1 text-[0.9375rem] font-semibold disabled:invisible">
+                  <span class="text-4xl leading-none text-rose-600" aria-hidden="true">›</span>
+                  <span id="nextLabel"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <article class="flex flex-col gap-3 rounded-2xl bg-white/70 p-4">
+          <div class="grid">
+            <div class="txt-a col-start-1 row-start-1 flex flex-col gap-2">
+              <h2 id="pName" class="m-0 font-display text-[1.375rem] font-extrabold leading-tight"></h2>
+              <p id="pDesc" class="m-0 text-[0.9375rem] text-rose-900/75"></p>
+              <p id="pPicked" hidden class="m-0 font-semibold"></p>
+            </div>
+            <div class="txt-b col-start-1 row-start-1">
+              <p class="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-rose-900/70">Toppings</p>
+              <div id="sumToppings" class="mt-1.5 flex flex-wrap gap-2"></div>
+              <div class="mt-3 flex items-baseline justify-between border-t border-rose-200 pt-2">
+                <span class="font-semibold">Total</span>
+                <span id="total" class="font-display text-2xl font-extrabold text-rose-600"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Un solo boton: en modo a agrega toppings, en modo b abre WhatsApp. Pon tu número en WHATSAPP_NUMBER (script.js) -->
+          <a id="mainBtn" href="#pedido" target="_blank" rel="noopener"
+             class="grid rounded-2xl px-4 py-3 text-center font-semibold no-underline">
+            <span class="txt-a col-start-1 row-start-1">Agregar topping</span>
+            <span class="txt-b col-start-1 row-start-1">Ordenar por WhatsApp</span>
+          </a>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer sencillo: nombre, ubicación y redes. Cambia los links y usuarios igual que en el hero -->
+  <footer class="mx-auto flex max-w-[480px] flex-col gap-4 px-5 pb-10 pt-6 text-sm text-rose-900/80">
+    <div class="border-t border-rose-200 pt-6">
+      <p class="m-0 font-display text-3xl font-extrabold leading-none text-rose-600">Fresas</p>
+      <a href="https://maps.app.goo.gl/jv686MCvtEfcYYXD7" target="_blank" rel="noopener"
+         class="mt-3 flex items-start gap-2 font-medium text-rose-900 no-underline">
+        <i class="fa-solid fa-location-dot mt-0.5 w-5 shrink-0 text-center text-rose-600" aria-hidden="true"></i>
+        <span>C. Macedonio Alcalá 102, RUTA INDEPENDENCIA, Centro, 68000 Oaxaca de Juárez, Oax.</span>
+      </a>
+    </div>
+    <ul class="m-0 flex list-none gap-3 p-0">
+      <li><a href="https://instagram.com/TU_USUARIO" target="_blank" rel="noopener" aria-label="Instagram" class="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-lg text-rose-600 no-underline"><i class="fa-brands fa-instagram" aria-hidden="true"></i></a></li>
+      <li><a href="https://facebook.com/TU_USUARIO" target="_blank" rel="noopener" aria-label="Facebook" class="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-lg text-rose-600 no-underline"><i class="fa-brands fa-facebook" aria-hidden="true"></i></a></li>
+      <li><a href="https://tiktok.com/@TU_USUARIO" target="_blank" rel="noopener" aria-label="TikTok" class="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-lg text-rose-600 no-underline"><i class="fa-brands fa-tiktok" aria-hidden="true"></i></a></li>
+    </ul>
+    <p class="m-0 text-xs text-rose-900/60">© <span id="year"></span> Fresas. Todos los derechos reservados.</p>
+  </footer>
+
+  <!-- Física 2D para la fruta que cae -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <script src="cup.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+html { scroll-behavior: smooth; }
+body { background: #fff1f2; color: #4c0519; font-family: "Figtree", system-ui, sans-serif; font-size: 16px; line-height: 1.5; }
+:focus-visible { outline: 3px solid #e11d48; outline-offset: 3px; }
+
+/* Hero: la foto se desvanece hacia la izquierda (donde pasa por debajo del texto) y hacia abajo */
+.fade-left {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 45%), linear-gradient(to top, transparent 0%, #000 22%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent 0%, #000 45%), linear-gradient(to top, transparent 0%, #000 22%);
+  mask-composite: intersect;
+}
+
+/* Toppings: degradado desde el borde hacia afuera, 100% de opacidad en el borde y 0% a 8px */
+.glow-ring {
+  --c: 0, 0, 0;
+  opacity: .3; /* aro discreto; al elegir el topping se pone rosa y a todo color */
+  transition: opacity .25s ease;
+  background: radial-gradient(closest-side,
+    rgb(var(--c)) calc(100% - 8px),
+    rgba(var(--c), 0.6) calc(100% - 6px),
+    rgba(var(--c), 0.28) calc(100% - 4px),
+    rgba(var(--c), 0.08) calc(100% - 2px),
+    transparent 100%);
+}
+[aria-pressed="true"] .glow-ring { --c: 225, 29, 72; opacity: 1; }
+/* Halo suave del color del fondo alrededor de las letras, para que se lean sobre la foto */
+.halo { text-shadow: 0 0 12px rgba(255, 241, 242, 0.95), 0 0 4px rgba(255, 241, 242, 0.9); }
+
+/* Textos del pedido: el que sale se desvanece y despues entra el nuevo.
+   data-mode="a" = elegir tamano, "b" = toppings / resumen */
+#panel .txt-a, #panel .txt-b { opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s linear .2s; }
+#panel[data-mode="a"] .txt-a, #panel[data-mode="b"] .txt-b { opacity: 1; visibility: visible; transition: opacity .3s ease .3s, visibility 0s linear .3s; }
+
+/* Rejilla del vaso. En modo b el vaso se corre a la derecha y producto/tamano/precio quedan pegados a la izquierda */
+.cupgrid { display: grid; align-items: end; column-gap: 4px; grid-template-columns: minmax(0, 1fr) 140px minmax(0, 1fr); transition: grid-template-columns .5s cubic-bezier(.65, 0, .35, 1); }
+#panel[data-mode="b"] .cupgrid { grid-template-columns: minmax(0, 1.4fr) 140px minmax(0, 0fr); }
+#panel[data-mode="b"] .leftcol { align-self: center; }
+#topScroll:active { cursor: grabbing; }
+
+/* El mismo boton cambia de "Agregar topping" a "Ordenar por WhatsApp" */
+#mainBtn { background: transparent; color: #e11d48; border: 1.5px solid #e11d48; transition: background-color .3s ease, color .3s ease, border-color .3s ease; }
+#panel[data-mode="b"] #mainBtn { background: #059669; color: #fff; border-color: #059669; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  #panel .txt-a, #panel .txt-b, .cupgrid, #mainBtn { transition: none !important; }
+}
