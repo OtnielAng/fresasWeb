@@ -1,5 +1,5 @@
 /* Tu número de WhatsApp con lada de país, sin + ni espacios. Ej: 5219510000000 */
-var WHATSAPP_NUMBER = '52XXXXXXXXXX';
+var WHATSAPP_NUMBER = '529513574930';
 
 /* Tamaños, del más grande al más chico. Los vasos son los mismos para todos los sabores, en el mismo orden */
 var SIZES = ['Grande', 'Mediano', 'Chico', 'Baby'];
