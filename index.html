@@ -1,192 +1,568 @@
 <!doctype html>
 <html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Fresas Av. Universidad</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Fresas </title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- SEO Meta Tags -->
+    <meta
+      name="description"
+      content="Las mejores fresas con crema en Oaxaca. Personaliza tu vaso con más de 15 toppings (Nutella, Oreo, Kinder, M&M, Cajeta). ¡Haz tu pedido fácil por WhatsApp o visítanos en Macedonio Alcalá 102, Centro!"
+    />
+    <meta
+      name="keywords"
+      content="fresas con crema oaxaca, fresas av universidad, postres oaxaca, fresas con chocolate oaxaca, postres macedonio alcala, fresas oaxaca centro, postres oaxaca delivery"
+    />
+    <meta name="author" content="Fresas Av. Universidad" />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <meta name="theme-color" content="#fff1f2" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Fresas Av. Universidad" />
 
-  <!-- Íconos de redes sociales (Font Awesome) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- Open Graph / Redes Sociales (WhatsApp, Facebook, Instagram) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Fresas Av. Universidad" />
+    <meta property="og:locale" content="es_MX" />
+    <meta
+      property="og:title"
+      content="Fresas Av. Universidad | Deliciosas Fresas con Crema en Oaxaca"
+    />
+    <meta
+      property="og:description"
+      content="Arma tu vaso de fresas con crema frescas a tu gusto con toppings premium. Pedidos rápidos por WhatsApp."
+    />
+    <meta property="og:image" content="img/fresas-hero.png" />
+    <meta
+      property="og:image:alt"
+      content="Vaso de fresas con crema frescas artesanales en Oaxaca"
+    />
+    <meta property="og:url" content="https://fresasavuniversidad.com/" />
 
-  <link rel="stylesheet" href="styles.css">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Fresas Av. Universidad | Fresas con Crema en Oaxaca"
+    />
+    <meta
+      name="twitter:description"
+      content="Fresas frescas con crema batida, uvas y más de 15 toppings en Oaxaca Centro."
+    />
+    <meta name="twitter:image" content="img/fresas-hero.png" />
 
-  <!-- Tailwind por CDN (funciona sin build). Si ya usas Tailwind instalado, borra estas dos líneas -->
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="tailwind.config.js"></script>
-</head>
+    <!-- Favicon ligero en SVG (cero peticiones extra) -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍓</text></svg>"
+    />
 
-<body>
-  <main class="mx-auto flex max-w-[480px] flex-col gap-7 py-7">
+    <!-- Preconectar fuentes con prioridad de carga rápida -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Momo+Trust+Display&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400;1,700&display=swap"
+      rel="stylesheet"
+    />
 
-    <!-- Zona que se desliza: toppings (izquierda) y hero (derecha) -->
-    <div id="viewport" class="overflow-hidden">
-      <div id="track" class="flex w-[200%] -translate-x-1/2 items-start transition-transform duration-500 ease-[cubic-bezier(.65,0,.35,1)] motion-reduce:transition-none">
+    <!-- Precarga de imagen clave para acelerar LCP -->
+    <link
+      rel="preload"
+      as="image"
+      href="img/fresas-hero.png"
+      fetchpriority="high"
+    />
 
-        <section id="toppingsScreen" inert class="flex h-0 w-1/2 flex-col gap-5 overflow-hidden px-5" aria-label="Toppings">
-          <button id="backBtn" type="button" class="flex items-center gap-1 self-start border-0 bg-transparent p-0 text-[0.9375rem] font-semibold text-rose-600">
-            <span class="text-3xl leading-none" aria-hidden="true">‹</span>Volver
-          </button>
-          <div>
-            <h2 class="m-0 font-display text-3xl font-extrabold leading-tight text-rose-600">Elige tus toppings</h2>
-            <p id="topHint" class="m-0 mt-1 text-sm text-rose-900/70"></p>
-          </div>
-          <div class="relative overflow-hidden rounded-3xl p-4">
-            <div id="oil" class="absolute inset-0 bg-rose-100" aria-hidden="true"></div>
-            <!-- pt y pb dan espacio para que el brillo de los toppings no se corte -->
-            <div id="topScroll" class="relative -mx-4 cursor-grab select-none overflow-x-auto px-4 pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <div id="topRows" class="flex w-max flex-col gap-3"></div>
+    <!-- CSS compilado y minificado localmente (ultra ligero, sin CDN pesado) -->
+    <link rel="stylesheet" href="styles.css" />
+
+    <!-- Datos Estructurados Schema.org para Google Rich Snippets -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Restaurant",
+        "name": "Fresas Av. Universidad",
+        "image": "img/fresas-hero.png",
+        "description": "Postres artesanales, fresas con crema frescas, uvas con crema y especialidades con más de 15 toppings en el Centro Histórico de Oaxaca.",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Portal del Palacio, Centro, 68000 Oaxaca de Juárez, Oax.",
+          "addressLocality": "Oaxaca de Juárez",
+          "addressRegion": "Oax.",
+          "postalCode": "68000",
+          "addressCountry": "MX"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 17.0655,
+          "longitude": -96.7236
+        },
+        "telephone": "+529513574930",
+        "servesCuisine": ["Postres", "Fresas con crema", "Fruta fresca"],
+        "priceRange": "$45 - $110 MXN",
+        "hasMenu": {
+          "@type": "Menu",
+          "name": "Menú de Fresas con Crema",
+          "hasMenuItem": [
+            {
+              "@type": "MenuItem",
+              "name": "Fresa con crema",
+              "description": "Fresas frescas en rebanadas con crema batida y una galleta de barquillo."
+            },
+            {
+              "@type": "MenuItem",
+              "name": "Uva con crema",
+              "description": "Uvas verdes y moradas con crema, servidas bien frías."
+            },
+            {
+              "@type": "MenuItem",
+              "name": "Especialidad de la casa",
+              "description": "Fresas con chocolate, crema y barquillo. Cambia cada temporada."
+            }
+          ]
+        }
+      }
+    </script>
+  </head>
+
+  <body>
+    <main class="mx-auto flex max-w-[480px] flex-col gap-7 py-7">
+      <!-- Zona que se desliza: toppings (izquierda) y hero (derecha) -->
+      <div id="viewport" class="overflow-hidden">
+        <div
+          id="track"
+          class="flex w-[200%] -translate-x-1/2 items-start transition-transform duration-500 ease-[cubic-bezier(.65,0,.35,1)] motion-reduce:transition-none"
+        >
+          <section
+            id="toppingsScreen"
+            aria-hidden="true"
+            inert
+            class="flex h-0 w-1/2 flex-col gap-5 overflow-hidden px-5"
+            aria-label="Elige tus toppings"
+          >
+            <button
+              id="backBtn"
+              type="button"
+              class="flex items-center gap-1 self-start border-0 bg-transparent p-0 text-[0.9375rem] font-semibold text-rose-600"
+            >
+              <span class="text-3xl leading-none" aria-hidden="true">‹</span
+              >Volver
+            </button>
+            <div>
+              <h2
+                class="m-0 font-display text-3xl font-extrabold leading-tight text-rose-600"
+              >
+                Elige tus toppings
+              </h2>
+              <p id="topHint" class="m-0 mt-1 text-sm text-rose-900/70"></p>
             </div>
-          </div>
-        </section>
-
-        <section id="heroScreen" class="flex w-1/2 flex-col px-5 pb-10">
-          <!-- Texto e imagen comparten la misma celda: la altura la marca la imagen, el texto va arriba y las redes abajo -->
-          <header class="grid">
-            <div class="halo relative z-10 col-start-1 row-start-1 flex w-[56%] min-w-0 flex-col gap-2">
-              <h1 class="font-display text-5xl font-extrabold leading-none tracking-tight text-rose-600">Fresas</h1>
-              <p class="text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-rose-900/70">Postres · Fruta</p>
-              <a href="https://maps.app.goo.gl/jv686MCvtEfcYYXD7" target="_blank" rel="noopener"
-                 class="mt-1 text-sm font-medium underline decoration-rose-300 decoration-2 underline-offset-4 hover:decoration-rose-600">
-                C. Macedonio Alcalá 102, RUTA INDEPENDENCIA, Centro, 68000 Oaxaca de Juárez, Oax.
-              </a>
-              <a href="#pedido" class="mt-3 self-start rounded-full bg-rose-600 px-7 py-3.5 text-[1.0625rem] font-semibold text-white no-underline transition-transform [text-shadow:none] active:scale-[.97] motion-reduce:transition-none">Ordena ya</a>
-
-              <!-- Redes sociales, una por línea. Cambia el link y el usuario de cada una. Los logos son íconos de Font Awesome (clases fa-brands fa-...) -->
-              <nav aria-label="Redes sociales" class="mt-auto pt-6">
-                <ul class="m-0 flex list-none flex-col gap-2 p-0">
-                  <li>
-                    <a href="https://instagram.com/TU_USUARIO" target="_blank" rel="noopener" class="flex items-center gap-2 text-sm font-semibold text-rose-900 no-underline">
-                      <i class="fa-brands fa-instagram w-6 shrink-0 text-center text-xl text-rose-600" aria-hidden="true"></i>
-                      <span>@tu_usuario</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://facebook.com/TU_USUARIO" target="_blank" rel="noopener" class="flex items-center gap-2 text-sm font-semibold text-rose-900 no-underline">
-                      <i class="fa-brands fa-facebook w-6 shrink-0 text-center text-xl text-rose-600" aria-hidden="true"></i>
-                      <span>@tu_usuario</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://tiktok.com/@TU_USUARIO" target="_blank" rel="noopener" class="flex items-center gap-2 text-sm font-semibold text-rose-900 no-underline">
-                      <i class="fa-brands fa-tiktok w-6 shrink-0 text-center text-xl text-rose-600" aria-hidden="true"></i>
-                      <span>@tu_usuario</span>
-                    </a>
-                  </li>
-                </ul>
-              </nav>
+            <div class="relative overflow-hidden rounded-3xl p-4">
+              <div
+                id="oil"
+                class="absolute inset-0 bg-rose-100"
+                aria-hidden="true"
+              ></div>
+              <!-- pt y pb dan espacio para que el brillo de los toppings no se corte -->
+              <div
+                id="topScroll"
+                class="relative -mx-4 cursor-grab select-none overflow-x-auto px-4 pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
+                <div id="topRows" class="flex w-max flex-col gap-3"></div>
+              </div>
             </div>
+          </section>
 
-            <div class="col-start-1 row-start-1 w-[46%] justify-self-end">
-              <img src="img/fresas-hero.png" alt="Imagen de ejemplo" class="fade-left -rotate-12 scale-125 mt-10">
-            </div>
-          </header>
-        </section>
+          <section id="heroScreen" class="flex w-1/2 flex-col px-5 pb-10">
+            <!-- Texto e imagen comparten la misma celda: la altura la marca la imagen, el texto va arriba y las redes abajo -->
+            <header class="grid">
+              <div
+                class="halo relative z-10 col-start-1 row-start-1 flex w-[56%] min-w-0 flex-col gap-2"
+              >
+                <h1
+                  class="font-display text-5xl font-extrabold leading-none tracking-tight text-rose-600"
+                >
+                  Fresas
+                </h1>
+                <p
+                  class="text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-rose-900/70"
+                >
+                  Postres · Fruta Fresca
+                </p>
+                <a
+                  href="https://maps.app.goo.gl/s5AiqVk7rYiVvSKq6"
+                  target="_blank"
+                  rel="noopener"
+                  aria-label="Ver ubicación de Fresas Av. Universidad en Google Maps"
+                  class="mt-1 text-sm font-medium no-underline text-rose-900/70 hover:text-rose-600 transition-colors"
+                >
+                  Portal del Palacio, Centro, 68000 Oaxaca de Juárez, Oax.
+                </a>
+                <a
+                  href="#pedido"
+                  aria-label="Ir a ordenar tus fresas con crema"
+                  class="mt-3 self-start rounded-full bg-rose-600 px-7 py-3.5 text-[1.0625rem] font-semibold text-white no-underline transition-transform [text-shadow:none] active:scale-[.97] motion-reduce:transition-none"
+                  >Ordena ya</a
+                >
 
+                <!-- Redes sociales con SVGs inline nativos, ultra ligeros y sin librerías externas -->
+                <nav aria-label="Redes sociales" class="mt-auto pt-6">
+                  <ul class="m-0 flex list-none flex-col gap-2 p-0">
+                    <li>
+                      <a
+                        href="https://instagram.com/TU_USUARIO"
+                        target="_blank"
+                        rel="noopener"
+                        aria-label="Síguenos en Instagram"
+                        class="flex items-center gap-2 text-sm font-semibold text-rose-900 no-underline hover:text-rose-600 transition-colors"
+                      >
+                        <svg
+                          class="w-5 h-5 shrink-0 text-rose-600"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"
+                          />
+                        </svg>
+                        <span>@tu_usuario</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        href="https://facebook.com/TU_USUARIO"
+                        target="_blank"
+                        rel="noopener"
+                        aria-label="Síguenos en Facebook"
+                        class="flex items-center gap-2 text-sm font-semibold text-rose-900 no-underline hover:text-rose-600 transition-colors"
+                      >
+                        <svg
+                          class="w-5 h-5 shrink-0 text-rose-600"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+                          />
+                        </svg>
+                        <span>@tu_usuario</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        href="https://tiktok.com/@TU_USUARIO"
+                        target="_blank"
+                        rel="noopener"
+                        aria-label="Síguenos en TikTok"
+                        class="flex items-center gap-2 text-sm font-semibold text-rose-900 no-underline hover:text-rose-600 transition-colors"
+                      >
+                        <svg
+                          class="w-5 h-5 shrink-0 text-rose-600"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"
+                          />
+                        </svg>
+                        <span>@tu_usuario</span>
+                      </a>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+
+              <div class="col-start-1 row-start-1 w-[46%] justify-self-end">
+                <img
+                  src="img/fresas-hero.png"
+                  alt="Vaso de deliciosas fresas con crema frescas con chocolate y barquillo en Oaxaca"
+                  width="409"
+                  height="597"
+                  fetchpriority="high"
+                  decoding="async"
+                  class="fade-left -rotate-12 scale-125 mt-10"
+                />
+              </div>
+            </header>
+          </section>
+        </div>
       </div>
-    </div>
 
-    <!-- Pedido: se queda fija, solo cambia el texto -->
-    <section id="pedido" aria-label="Arma tu pedido" class="scroll-mt-5 px-5">
-      <div id="tabs" role="tablist" aria-label="Sabores" class="relative z-10 grid grid-cols-3 items-end"></div>
+      <!-- Pedido: se queda fija, solo cambia el texto -->
+      <section id="pedido" aria-label="Arma tu pedido" class="scroll-mt-5 px-5">
+        <div
+          id="tabs"
+          role="tablist"
+          aria-label="Sabores de postres"
+          class="relative z-10 grid grid-cols-3 items-end"
+        ></div>
 
-      <div id="panel" data-mode="a" role="tabpanel" class="flex flex-col gap-5 rounded-b-3xl bg-rose-100 p-5">
-
-        <div class="grid">
-          <p id="sizeName" aria-live="polite" class="txt-a col-start-1 row-start-1 m-0 text-center font-display text-2xl font-extrabold"></p>
-          <p class="txt-b col-start-1 row-start-1 m-0 text-left font-display text-2xl font-extrabold">Tu pedido</p>
-        </div>
-
-        <div>
-          <div class="cupgrid">
-            <div class="leftcol grid items-end">
-              <div class="txt-a col-start-1 row-start-1">
-                <button id="prev" type="button" aria-label="Tamaño más chico" class="flex min-h-16 w-full flex-col items-center justify-end border-0 bg-transparent pb-1 text-[0.9375rem] font-semibold disabled:invisible">
-                  <span class="text-4xl leading-none text-rose-600" aria-hidden="true">‹</span>
-                  <span id="prevLabel"></span>
-                </button>
-              </div>
-              <div class="txt-b col-start-1 row-start-1 text-left">
-                <p class="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-rose-900/70">Producto</p>
-                <p id="bName" class="m-0 font-display text-lg font-extrabold leading-tight"></p>
-                <p class="m-0 mt-4 text-xs font-semibold uppercase tracking-[0.08em] text-rose-900/70">Tamaño</p>
-                <p id="bSize" class="m-0 text-base font-semibold leading-tight"></p>
-                <p id="bPrice" class="m-0 font-display text-xl font-extrabold text-rose-600"></p>
-              </div>
-            </div>
-
-            <!-- El vaso y su lienzo de física los maneja cup.js. perspective da profundidad al giro de moneda -->
-            <div id="stage" class="relative h-[230px]" style="perspective: 700px">
-              <div id="cupWrap" class="absolute bottom-0 left-1/2">
-                <canvas id="fx" class="pointer-events-none absolute" aria-hidden="true"></canvas>
-                <img id="cupImg" alt="" class="absolute left-0 top-0 h-full w-full">
-              </div>
-            </div>
-
-            <div class="grid items-end">
-              <div class="txt-a col-start-1 row-start-1">
-                <button id="next" type="button" aria-label="Tamaño más grande" class="flex min-h-16 w-full flex-col items-center justify-end border-0 bg-transparent pb-1 text-[0.9375rem] font-semibold disabled:invisible">
-                  <span class="text-4xl leading-none text-rose-600" aria-hidden="true">›</span>
-                  <span id="nextLabel"></span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <article class="flex flex-col gap-3 rounded-2xl bg-white/70 p-4">
+        <div
+          id="panel"
+          data-mode="a"
+          role="tabpanel"
+          class="flex flex-col gap-5 rounded-b-3xl bg-rose-100 p-5"
+        >
           <div class="grid">
-            <div class="txt-a col-start-1 row-start-1 flex flex-col gap-2">
-              <h2 id="pName" class="m-0 font-display text-[1.375rem] font-extrabold leading-tight"></h2>
-              <p id="pDesc" class="m-0 text-[0.9375rem] text-rose-900/75"></p>
-              <p id="pPicked" hidden class="m-0 font-semibold"></p>
-            </div>
-            <div class="txt-b col-start-1 row-start-1">
-              <p class="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-rose-900/70">Toppings</p>
-              <div id="sumToppings" class="mt-1.5 flex flex-wrap gap-2"></div>
-              <div class="mt-3 flex items-baseline justify-between border-t border-rose-200 pt-2">
-                <span class="font-semibold">Total</span>
-                <span id="total" class="font-display text-2xl font-extrabold text-rose-600"></span>
+            <p
+              id="sizeName"
+              aria-live="polite"
+              class="txt-a col-start-1 row-start-1 m-0 text-center font-display text-2xl font-extrabold"
+            ></p>
+            <p
+              class="txt-b col-start-1 row-start-1 m-0 text-left font-display text-2xl font-extrabold"
+            >
+              Tu pedido
+            </p>
+          </div>
+
+          <div>
+            <div class="cupgrid">
+              <div class="leftcol grid items-end">
+                <div class="txt-a col-start-1 row-start-1">
+                  <button
+                    id="prev"
+                    type="button"
+                    aria-label="Tamaño más chico"
+                    class="flex min-h-16 w-full flex-col items-center justify-end border-0 bg-transparent pb-1 text-[0.9375rem] font-semibold disabled:invisible"
+                  >
+                    <span
+                      class="text-4xl leading-none text-rose-600"
+                      aria-hidden="true"
+                      >‹</span
+                    >
+                    <span id="prevLabel"></span>
+                  </button>
+                </div>
+                <div class="txt-b col-start-1 row-start-1 text-left">
+                  <p
+                    class="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-rose-900/70"
+                  >
+                    Producto
+                  </p>
+                  <p
+                    id="bName"
+                    class="m-0 font-display text-lg font-extrabold leading-tight"
+                  ></p>
+                  <p
+                    id="bSizeTitle"
+                    class="m-0 mt-4 text-xs font-semibold uppercase tracking-[0.08em] text-rose-900/70"
+                  >
+                    Tamaño
+                  </p>
+                  <p
+                    id="bSize"
+                    class="m-0 text-base font-semibold leading-tight"
+                  ></p>
+                  <p
+                    id="bPrice"
+                    class="m-0 font-display text-xl font-extrabold text-rose-600"
+                  ></p>
+                </div>
+              </div>
+
+              <!-- El vaso y su lienzo de física los maneja cup.js. perspective da profundidad al giro de moneda -->
+              <div
+                id="stage"
+                class="relative h-[230px]"
+                style="perspective: 700px"
+              >
+                <div id="cupWrap" class="absolute bottom-0 left-1/2">
+                  <canvas
+                    id="fx"
+                    class="pointer-events-none absolute"
+                    aria-hidden="true"
+                  ></canvas>
+                  <img
+                    id="cupImg"
+                    alt="Vaso de fresas con crema"
+                    loading="eager"
+                    decoding="async"
+                    class="absolute left-0 top-0 h-full w-full"
+                  />
+                </div>
+              </div>
+
+              <div class="grid items-end">
+                <div class="txt-a col-start-1 row-start-1">
+                  <button
+                    id="next"
+                    type="button"
+                    aria-label="Tamaño más grande"
+                    class="flex min-h-16 w-full flex-col items-center justify-end border-0 bg-transparent pb-1 text-[0.9375rem] font-semibold disabled:invisible"
+                  >
+                    <span
+                      class="text-4xl leading-none text-rose-600"
+                      aria-hidden="true"
+                      >›</span
+                    >
+                    <span id="nextLabel"></span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Un solo boton: en modo a agrega toppings, en modo b abre WhatsApp. Pon tu número en WHATSAPP_NUMBER (script.js) -->
-          <a id="mainBtn" href="#pedido" target="_blank" rel="noopener"
-             class="grid rounded-2xl px-4 py-3 text-center font-semibold no-underline">
-            <span class="txt-a col-start-1 row-start-1">Agregar topping</span>
-            <span class="txt-b col-start-1 row-start-1">Ordenar por WhatsApp</span>
-          </a>
-        </article>
+          <article class="flex flex-col gap-3 rounded-2xl bg-white/70 p-4">
+            <div class="grid">
+              <div class="txt-a col-start-1 row-start-1 flex flex-col gap-2">
+                <h2
+                  id="pName"
+                  class="m-0 font-display text-[1.375rem] font-extrabold leading-tight"
+                ></h2>
+                <p id="pDesc" class="m-0 text-[0.9375rem] text-rose-900/75"></p>
+                <p id="pPicked" hidden class="m-0 font-semibold"></p>
+              </div>
+              <div class="txt-b col-start-1 row-start-1">
+                <p
+                  class="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-rose-900/70"
+                >
+                  Toppings
+                </p>
+                <div id="sumToppings" class="mt-1.5 flex flex-wrap gap-2"></div>
+                <div
+                  class="mt-3 flex items-baseline justify-between border-t border-rose-200 pt-2"
+                >
+                  <span class="font-semibold">Total</span>
+                  <span
+                    id="total"
+                    class="font-display text-2xl font-extrabold text-rose-600"
+                  ></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Un solo botón: en modo a agrega toppings, en modo b abre WhatsApp. -->
+            <a
+              id="mainBtn"
+              href="#pedido"
+              target="_blank"
+              rel="noopener"
+              aria-label="Personaliza tus toppings y haz tu pedido por WhatsApp"
+              class="grid rounded-2xl px-4 py-3 text-center font-semibold no-underline shadow-lg shadow-rose-600/25 transition-all duration-200 active:scale-95 active:shadow-md"
+            >
+              <span class="txt-a col-start-1 row-start-1">Agregar topping</span>
+              <span class="txt-b col-start-1 row-start-1"
+                >Ordenar por WhatsApp</span
+              >
+            </a>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer sencillo: nombre, ubicación y redes -->
+    <footer
+      class="mx-auto flex max-w-[480px] flex-col gap-4 px-5 pb-10 pt-6 text-sm text-rose-900/80"
+    >
+      <div class="border-t border-rose-200 pt-6">
+        <p
+          class="m-0 font-display text-3xl font-extrabold leading-none text-rose-600"
+        >
+          Fresas
+        </p>
+        <a
+          href="https://maps.app.goo.gl/jv686MCvtEfcYYXD7"
+          target="_blank"
+          rel="noopener"
+          aria-label="Cómo llegar a Fresas Av. Universidad en Oaxaca"
+          class="mt-3 flex items-start gap-2 font-medium text-rose-900 no-underline hover:text-rose-600 transition-colors"
+        >
+          <svg
+            class="mt-0.5 w-5 h-5 shrink-0 text-rose-600"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z"
+            />
+          </svg>
+          <span
+            >Portal del Palacio, Centro, 68000 Oaxaca de Juárez, Oax.</span
+          >
+        </a>
       </div>
-    </section>
-  </main>
+      <ul class="m-0 flex list-none gap-3 p-0">
+        <li>
+          <a
+            href="https://instagram.com/TU_USUARIO"
+            target="_blank"
+            rel="noopener"
+            aria-label="Instagram de Fresas Av. Universidad"
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600 no-underline hover:bg-rose-200 transition-colors"
+          >
+            <svg
+              class="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"
+              />
+            </svg>
+          </a>
+        </li>
+        <li>
+          <a
+            href="https://facebook.com/TU_USUARIO"
+            target="_blank"
+            rel="noopener"
+            aria-label="Facebook de Fresas Av. Universidad"
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600 no-underline hover:bg-rose-200 transition-colors"
+          >
+            <svg
+              class="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+              />
+            </svg>
+          </a>
+        </li>
+        <li>
+          <a
+            href="https://tiktok.com/@TU_USUARIO"
+            target="_blank"
+            rel="noopener"
+            aria-label="TikTok de Fresas Av. Universidad"
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600 no-underline hover:bg-rose-200 transition-colors"
+          >
+            <svg
+              class="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"
+              />
+            </svg>
+          </a>
+        </li>
+      </ul>
+      <p class="m-0 text-xs text-rose-900/60">
+        © <span id="year"></span> Portal del Palacio, Centro, 68000 Oaxaca de Juárez, Oax.
+      </p>
+    </footer>
 
-  <!-- Footer sencillo: nombre, ubicación y redes. Cambia los links y usuarios igual que en el hero -->
-  <footer class="mx-auto flex max-w-[480px] flex-col gap-4 px-5 pb-10 pt-6 text-sm text-rose-900/80">
-    <div class="border-t border-rose-200 pt-6">
-      <p class="m-0 font-display text-3xl font-extrabold leading-none text-rose-600">Fresas</p>
-      <a href="https://maps.app.goo.gl/jv686MCvtEfcYYXD7" target="_blank" rel="noopener"
-         class="mt-3 flex items-start gap-2 font-medium text-rose-900 no-underline">
-        <i class="fa-solid fa-location-dot mt-0.5 w-5 shrink-0 text-center text-rose-600" aria-hidden="true"></i>
-        <span>C. Macedonio Alcalá 102, RUTA INDEPENDENCIA, Centro, 68000 Oaxaca de Juárez, Oax.</span>
-      </a>
-    </div>
-    <ul class="m-0 flex list-none gap-3 p-0">
-      <li><a href="https://instagram.com/TU_USUARIO" target="_blank" rel="noopener" aria-label="Instagram" class="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-lg text-rose-600 no-underline"><i class="fa-brands fa-instagram" aria-hidden="true"></i></a></li>
-      <li><a href="https://facebook.com/TU_USUARIO" target="_blank" rel="noopener" aria-label="Facebook" class="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-lg text-rose-600 no-underline"><i class="fa-brands fa-facebook" aria-hidden="true"></i></a></li>
-      <li><a href="https://tiktok.com/@TU_USUARIO" target="_blank" rel="noopener" aria-label="TikTok" class="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-lg text-rose-600 no-underline"><i class="fa-brands fa-tiktok" aria-hidden="true"></i></a></li>
-    </ul>
-    <p class="m-0 text-xs text-rose-900/60">© <span id="year"></span> Fresas. Todos los derechos reservados.</p>
-  </footer>
-
-  <!-- Física 2D para la fruta que cae -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
-  <script src="cup.js"></script>
-  <script src="script.js"></script>
-</body>
+    <!-- Scripts diferidos para carga instantánea del DOM (local, sin tracking prevention ni CDN) -->
+    <script src="matter.min.js" defer></script>
+    <script src="cup.js" defer></script>
+    <script src="script.js" defer></script>
+  </body>
 </html>

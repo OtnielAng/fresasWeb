@@ -61,13 +61,42 @@ var TOPPINGS = [
   { name: 'Galleta Oreo', img: 'img/toppings/oreo.jpg' }
 ];
 
-/* PRECIOS. Los números de abajo son de EJEMPLO: cámbialos por los reales.
+/* 4 Especialidades establecidas: nombre, precio, descripción e imagen propia de cada una.
+   Modifica aquí los nombres, precios o imágenes cuando lo necesites. */
+var SPECIALTIES = [
+  {
+    name: 'Fresas con Chocolate',
+    desc: 'Fresas frescas en rebanadas con chocolate derretido, crema batida y barquillo crocante.',
+    price: 85,
+    img: 'img/tabs/esp1.png'
+  },
+  {
+    name: 'Fresas Nutella',
+    desc: 'Fresas frescas bañadas en abundante Nutella original con crema artesanal suave.',
+    price: 90,
+    img: 'img/tabs/esp2.png'
+  },
+  {
+    name: 'Copa Cheesecake',
+    desc: 'Capas de fresas naturales con crema especial de cheesecake y base de galleta crujiente.',
+    price: 95,
+    img: 'img/tabs/esp3.png'
+  },
+  {
+    name: 'Especialidad Suprema',
+    desc: 'Nuestra combinación estrella con fresas selectas, crema batida, chocolate y barquillo.',
+    price: 110,
+    img: 'img/tabs/esp4.png'
+  }
+];
+
+/* PRECIOS para sabores regulares (Fresas y Uvas).
    size: precio de cada tamaño, en el mismo orden que SIZES (Grande, Mediano, Chico, Baby)
-   flavorExtra: lo que se suma según el sabor (Fresas, Uvas, Especialidades)
+   flavorExtra: lo que se suma según el sabor (Fresas, Uvas)
    topping: precio normal de un topping       toppingBy: precios distintos para toppings en particular */
 var PRICES = {
   size: [95, 80, 65, 45],
-  flavorExtra: [0, 0, 15],
+  flavorExtra: [0, 0, 0],
   topping: 0,
   toppingBy: { 'Nutella B-Ready': 15, 'Kinder Delice': 15 }
 };
@@ -85,7 +114,8 @@ function total() {
   return state.picked.reduce(function (sum, t) { return sum + toppingPrice(t); }, sizePrice(state.size));
 }
 
-var state = { flavor: 0, size: 3, picked: [], mode: 'a' }; /* size 3 = Baby, el más chico, es con el que empieza */
+var state = { flavor: 0, size: 3, specialty: 0, picked: [], mode: 'a' }; /* size 3 = Baby, el más chico */
+function isSpecialty() { return state.flavor === 2; }
 var waUrl = '#';
 var el = function (id) { return document.getElementById(id); };
 var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -116,6 +146,14 @@ var FLARE_L = "before:absolute before:bottom-0 before:right-full before:h-4 befo
 var FLARE_R = "after:absolute after:bottom-0 after:left-full after:h-4 after:w-4 after:rounded-bl-2xl after:shadow-[-0.5rem_0.5rem_0_0.5rem_#ffe4e6] after:content-[''] ";
 var PANEL = 'flex flex-col gap-5 rounded-b-3xl bg-rose-100 p-5 ';
 
+/* Ayudante para compatibilidad con navegadores antiguos que no soportan inert */
+function setInert(node, val) {
+  if (!node) return;
+  try { node.inert = val; } catch (e) {}
+  if (val) node.setAttribute('aria-hidden', 'true');
+  else node.removeAttribute('aria-hidden');
+}
+
 /* ---------- pedido ---------- */
 function renderTabs() {
   el('tabs').innerHTML = FLAVORS.map(function (f, i) {
@@ -124,7 +162,7 @@ function renderTabs() {
     /* Estilo Disney+: la imagen es el fondo del cuadro y el texto va encima */
     return '<button class="' + cls + '" role="tab" type="button" data-i="' + i + '" aria-selected="' + on + '">' +
       '<span class="relative block w-full overflow-hidden rounded-2xl transition-transform duration-300 ' + TAB_RATIO + ' ' + (on ? '' : 'scale-95') + '">' +
-        '<img src="' + esc(f.tabImg) + '" alt="" onerror="' + ONERR + '" class="absolute inset-0 h-full w-full bg-rose-200 object-cover">' +
+        '<img src="' + esc(f.tabImg) + '" alt="' + esc(f.name) + '" width="120" height="90" loading="eager" decoding="async" onerror="' + ONERR + '" class="absolute inset-0 h-full w-full bg-rose-200 object-cover">' +
         '<span class="absolute inset-0 transition-colors duration-300 ' + (on ? 'bg-gradient-to-t from-black/60 to-black/15' : 'bg-black/55') + '"></span>' +
         '<span class="absolute inset-0 flex items-center justify-center"><span data-fit style="font-size:14px" class="whitespace-nowrap font-extrabold leading-none tracking-tight text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">' + esc(f.tab) + '</span></span>' +
       '</span></button>';
@@ -132,10 +170,29 @@ function renderTabs() {
   el('panel').className = PANEL + (state.flavor === 0 ? 'rounded-tl-none ' : 'rounded-tl-3xl ') + (state.flavor === FLAVORS.length - 1 ? 'rounded-tr-none' : 'rounded-tr-3xl');
   fitTabLabels();
 }
-/* El carrusel es infinito: después de Grande viene Baby y al revés.
-   Flecha derecha = vaso más grande, flecha izquierda = vaso más chico. */
+/* El carrusel es infinito: después de Grande viene Baby y al revés (o cicla entre las 4 especialidades).
+   Flecha derecha = siguiente opción, flecha izquierda = opción anterior. */
 function sizeAt(i) { return SIZES[(i + SIZES.length) % SIZES.length]; }
+
 function renderSize() {
+  var titleEl = el('bSizeTitle');
+  if (titleEl) titleEl.textContent = isSpecialty() ? 'Especialidad' : 'Tamaño';
+
+  if (isSpecialty()) {
+    var sp = SPECIALTIES[state.specialty];
+    var prevSp = SPECIALTIES[(state.specialty - 1 + SPECIALTIES.length) % SPECIALTIES.length];
+    var nextSp = SPECIALTIES[(state.specialty + 1) % SPECIALTIES.length];
+
+    el('sizeName').innerHTML = esc(sp.name) + ' <span class="text-rose-600">· ' + money(sp.price) + '</span>';
+    el('bSize').textContent = sp.name;
+    el('bPrice').textContent = money(sp.price);
+    el('prev').disabled = false;
+    el('next').disabled = false;
+    el('prevLabel').innerHTML = esc(prevSp.name) + '<span class="block text-xs font-medium text-rose-900/70">' + money(prevSp.price) + '</span>';
+    el('nextLabel').innerHTML = esc(nextSp.name) + '<span class="block text-xs font-medium text-rose-900/70">' + money(nextSp.price) + '</span>';
+    return;
+  }
+
   var name = SIZES[state.size];
   var lbl = function (i) {
     i = (i + SIZES.length) % SIZES.length;
@@ -144,10 +201,21 @@ function renderSize() {
   el('sizeName').innerHTML = esc(name) + ' <span class="text-rose-600">· ' + money(sizePrice(state.size)) + '</span>';
   el('bSize').textContent = name;
   el('bPrice').textContent = money(sizePrice(state.size));
+  el('prev').disabled = false;
+  el('next').disabled = false;
   el('prevLabel').innerHTML = lbl(state.size + 1); /* izquierda: el siguiente más chico */
   el('nextLabel').innerHTML = lbl(state.size - 1); /* derecha: el siguiente más grande */
 }
-function goSize(delta) { /* +1 = más chico, -1 = más grande */
+
+function goSize(delta) { /* +1 = siguiente opción, -1 = anterior */
+  if (isSpecialty()) {
+    state.specialty = (state.specialty + delta + SPECIALTIES.length) % SPECIALTIES.length;
+    renderProduct();
+    renderSize();
+    renderSummary();
+    syncCup(delta);
+    return;
+  }
   state.size = (state.size + delta + SIZES.length) % SIZES.length;
   while (regularCount() > maxTop()) { /* en un vaso más chico caben menos: se quitan los últimos normales */
     for (var k = state.picked.length - 1; k >= 0; k--) if (!isExtra(state.picked[k])) { state.picked.splice(k, 1); break; }
@@ -155,9 +223,30 @@ function goSize(delta) { /* +1 = más chico, -1 = más grande */
   syncGrid(); renderProduct();
   renderSize(); renderSummary(); syncCup(delta);
 }
-/* Le avisa al vaso lo que se eligió; él decide si gira, si cae fruta o si cae un topping */
-function syncCup(dir) { Cup.set({ size: state.size, flavor: state.flavor, picked: state.picked }, dir); }
+
+/* Le avisa al vaso o a la especialidad lo que se eligió */
+function syncCup(dir) {
+  Cup.set({
+    size: state.size,
+    flavor: state.flavor,
+    specialty: state.specialty,
+    isSpecialty: isSpecialty(),
+    specialtyItem: isSpecialty() ? SPECIALTIES[state.specialty] : null,
+    picked: isSpecialty() ? [] : state.picked
+  }, dir);
+}
+
 function renderProduct() {
+  if (isSpecialty()) {
+    var sp = SPECIALTIES[state.specialty];
+    el('pName').textContent = sp.name;
+    el('bName').textContent = sp.name;
+    el('pDesc').textContent = sp.desc;
+    var pk = el('pPicked');
+    pk.hidden = true;
+    pk.textContent = '';
+    return;
+  }
   var f = FLAVORS[state.flavor];
   el('pName').textContent = f.name;
   el('bName').textContent = f.name;
@@ -166,7 +255,23 @@ function renderProduct() {
   pk.hidden = state.picked.length === 0;
   pk.textContent = state.picked.length ? 'Con ' + state.picked.join(', ').toLowerCase() : '';
 }
+
 function renderSummary() {
+  if (isSpecialty()) {
+    var sp = SPECIALTIES[state.specialty];
+    el('sumToppings').innerHTML = '<span class="text-[0.9375rem] text-rose-900/70">Receta completa de la casa (no requiere toppings adicionales).</span>';
+    el('total').textContent = money(sp.price);
+    var msg = 'Hola, quiero ordenar:\n• Especialidad: ' + sp.name +
+              '\n*Total: ' + money(sp.price) + '*';
+    waUrl = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
+    el('mainBtn').href = waUrl;
+    el('mainBtn').querySelector('.txt-a').textContent = 'Ordenar por WhatsApp';
+    el('mainBtn').querySelector('.txt-b').textContent = 'Ordenar por WhatsApp';
+    return;
+  }
+
+  el('mainBtn').querySelector('.txt-a').textContent = 'Agregar topping';
+  el('mainBtn').querySelector('.txt-b').textContent = 'Ordenar por WhatsApp';
   el('sumToppings').innerHTML = state.picked.length
     ? state.picked.map(function (t) {
         return '<button type="button" data-rm="' + esc(t) + '" class="rounded-full border-[1.5px] border-rose-600 bg-white px-3 py-1.5 text-sm font-medium text-rose-950">' + esc(t) + ' <span class="text-rose-900/60">' + (toppingPrice(t) ? money(toppingPrice(t)) : '') + '</span> <span aria-hidden="true">×</span><span class="sr-only">Quitar</span></button>';
@@ -198,7 +303,7 @@ function toppingBtn(t) {
     '<span class="relative block h-[72px] w-[72px]">' +
       '<span class="glow-ring pointer-events-none absolute -inset-2 rounded-full" aria-hidden="true"></span>' +
       '<span class="relative block h-full w-full overflow-hidden rounded-full transition-colors group-aria-pressed:border-rose-600">' +
-        '<img src="' + esc(t.img) + '" alt="" onerror="' + ONERR + '" draggable="false" class="h-full w-full bg-rose-200 object-cover">' +
+        '<img src="' + esc(t.img) + '" alt="Topping de ' + esc(t.name) + '" width="72" height="72" decoding="async" onerror="' + ONERR + '" draggable="false" class="h-full w-full bg-rose-200 object-cover">' +
         '<span class="pointer-events-none absolute inset-0 rounded-full shadow-[inset_0_4px_8px_rgba(0,0,0,0.25)]"></span>' +
       '</span>' +
       '<span class="absolute -right-0.5 -top-0.5 hidden h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-[0.7rem] font-bold text-white group-aria-pressed:flex" aria-hidden="true">✓</span>' +
@@ -229,7 +334,9 @@ function syncGrid() {
 function setPicked(name, on) {
   var i = state.picked.indexOf(name);
   if (on && i === -1 && !isExtra(name) && regularCount() >= maxTop()) { /* vaso lleno */
-    el('topHint').animate([{ transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(0)' }], { duration: 220 });
+    if (el('topHint').animate) {
+      el('topHint').animate([{ transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(0)' }], { duration: 220 });
+    }
     return;
   }
   if (on && i === -1) state.picked.push(name);
@@ -248,16 +355,20 @@ function playOil() {
   var DX = 190, ROLL = -(DX / (72 * Math.PI)) * 360; /* una vuelta por cada circunferencia recorrida */
   [].forEach.call(el('topRows').querySelectorAll('[data-t]'), function (b, i) {
     var delay = 450 + Math.min(i, 12) * 60, opt = { duration: 800, delay: delay, easing: 'cubic-bezier(.2,.7,.25,1)', fill: 'backwards' };
-    b.animate([{ opacity: 0, transform: 'translateX(' + DX + 'px)' }, { opacity: 1, offset: 0.15 }, { opacity: 1, transform: 'translateX(0)' }], opt);
+    if (b.animate) {
+      b.animate([{ opacity: 0, transform: 'translateX(' + DX + 'px)' }, { opacity: 1, offset: 0.15 }, { opacity: 1, transform: 'translateX(0)' }], opt);
+    }
     /* solo el círculo gira (la letra no): rueda como una moneda */
-    b.firstElementChild.animate([{ transform: 'rotate(' + (-ROLL) + 'deg)' }, { transform: 'rotate(0deg)' }], opt);
+    if (b.firstElementChild && b.firstElementChild.animate) {
+      b.firstElementChild.animate([{ transform: 'rotate(' + (-ROLL) + 'deg)' }, { transform: 'rotate(0deg)' }], opt);
+    }
   });
 }
 
 /* ---------- cambio de pantalla (solo hero <-> toppings) ---------- */
 var anim = null, pendingOut = null;
 function finish() {
-  if (pendingOut) { pendingOut.classList.add('h-0', 'overflow-hidden'); pendingOut.inert = true; pendingOut = null; }
+  if (pendingOut) { pendingOut.classList.add('h-0', 'overflow-hidden'); setInert(pendingOut, true); pendingOut = null; }
   if (anim) { var a = anim; anim = null; a.cancel(); }
 }
 function show(which) {
@@ -267,7 +378,7 @@ function show(which) {
   var vp = el('viewport');
   finish();
   var h0 = vp.offsetHeight;
-  inc.classList.remove('h-0', 'overflow-hidden'); inc.inert = false;
+  inc.classList.remove('h-0', 'overflow-hidden'); setInert(inc, false);
   var h1 = inc.offsetHeight;
   el('track').classList.toggle('-translate-x-1/2', !toT);
   try { window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); } catch (e) {}
@@ -292,11 +403,20 @@ el('tabs').addEventListener('click', function (e) {
   var i = +b.getAttribute('data-i');
   if (i === state.flavor) return;
   state.flavor = i;
+  if (isSpecialty()) {
+    state.mode = 'a';
+    el('panel').setAttribute('data-mode', 'a');
+    show('hero');
+  }
   renderTabs(); renderSize(); renderProduct(); renderSummary(); reveal(i); syncCup();
 });
 el('prev').addEventListener('click', function () { goSize(1); });
 el('next').addEventListener('click', function () { goSize(-1); });
 el('mainBtn').addEventListener('click', function (e) {
+  if (isSpecialty()) {
+    /* Las especialidades ya no tienen toppings: van directo a WhatsApp */
+    return;
+  }
   if (state.mode === 'a') { e.preventDefault(); setMode('b'); }
 });
 el('backBtn').addEventListener('click', function () { setMode('a'); });
@@ -355,3 +475,18 @@ window.addEventListener('resize', fitTabLabels);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTabLabels);
 
 el('year').textContent = new Date().getFullYear();
+
+function animatePrice(newPrice) {
+  var el = document.getElementById('priceDisplay');
+  var current = parseInt(el.textContent.replace('$', '')) || 0;
+  var diff = newPrice - current;
+  if (diff === 0 || reduce) { el.textContent = '$' + newPrice; return; }
+
+  var frames = 15;
+  var step = 0;
+  var timer = setInterval(function() {
+    step++;
+    el.textContent = '$' + Math.round(current + (diff * (step / frames)));
+    if (step >= frames) clearInterval(timer);
+  }, 16);
+}

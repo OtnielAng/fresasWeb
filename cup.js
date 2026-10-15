@@ -1,9 +1,14 @@
 /* cup.js: el vaso. La fruta y los toppings caen con física 2D (Matter.js) y se quedan dentro.
    script.js solo llama a Cup.init(...), Cup.set(...) y Cup.start(). */
 var Cup = (function () {
-  var M = window.Matter;
-  var DPR = Math.min(window.devicePixelRatio || 1, 2); /* tope 2 para cuidar celulares de gama baja */
-  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var M = typeof window !== 'undefined' ? window.Matter : null;
+  function getM() {
+    if (!M && typeof window !== 'undefined') M = window.Matter;
+    return M;
+  }
+  var isLowEnd = typeof navigator !== 'undefined' && navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2;
+  var DPR = Math.min(window.devicePixelRatio || 1, isLowEnd ? 1.25 : 2); /* adaptativo para cuidar celulares de gama baja */
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* Espacio extra del lienzo alrededor del vaso: por arriba nace la fruta, a los lados cabe el montón */
   var MARGIN = 30, HEAD = 170, FOOT = 12;
@@ -25,14 +30,14 @@ var Cup = (function () {
     { w: 96, aspect: 1289 / 1227, rimY: 0.20, floorY: 0.46, topL: 0.04, topR: 0.96, botL: 0.31, botR: 0.70, front: true, lipY: 0.505 }
   ];
 
-  var cfg, wrap, img, cv, ctx;
+  var cfg, wrap, img, cv, ctx, sh;
   var dims = null, engine = null, bodies = [];
   var raf = 0, last = 0, acc = 0, lastChange = 0;
   var seq = 0, started = false;
-  var cur = { size: null, flavor: null, picked: [] };
+  var cur = { size: null, flavor: null, specialty: 0, isSpecialty: false, specialtyItem: null, picked: [] };
   var cache = {};
   var fruitH = 20;                          /* alto de una fruta, para saber hasta dónde sube la crema */
-  var L = { cream: null, streams: [], until: 0 }; /* líquidos: crema de fondo, chorros que caen, hora en que termina todo */
+  var L = { cream: null, streams: [], until: 0, parts: [] }; /* líquidos: crema de fondo, chorros que caen, hora en que termina todo */
 
   function rand(a, b) { return a + Math.random() * (b - a); }
   function X(n) { return MARGIN + n * dims.W; }
@@ -50,14 +55,53 @@ var Cup = (function () {
     return cache[src];
   }
 
+  /* Restablece el vaso a su aspecto original cuando se sale de especialidades */
+  function restoreCupMode() {
+    if (cv) cv.style.display = 'block';
+    if (img) {
+      img.style.aspectRatio = '';
+      img.style.objectFit = 'contain';
+      img.style.borderRadius = '0';
+      img.style.boxShadow = 'none';
+    }
+  }
+
+  /* Muestra la foto de la especialidad directamente en el escenario en formato 3:4 */
+  function showSpecialty(item, dir) {
+    clearBodies();
+    if (cv) cv.style.display = 'none';
+    if (wrap) {
+      /* Formato 3:4 (ancho: 162px, alto: 216px -> 162/216 = 3/4) */
+      wrap.style.width = '162px';
+      wrap.style.height = '216px';
+      wrap.style.marginLeft = '-81px';
+    }
+    if (img) {
+      img.style.aspectRatio = '3 / 4';
+      img.style.objectFit = 'contain';
+      img.style.borderRadius = '1.25rem';
+      img.style.boxShadow = '0 12px 28px -6px rgba(225, 29, 72, 0.3), 0 8px 12px -6px rgba(225, 29, 72, 0.2)';
+      img.alt = item ? item.name : 'Especialidad';
+      img.src = item ? item.img : '';
+    }
+    if (wrap && wrap.animate && !reduced) {
+      wrap.animate([
+        { opacity: 0.2, transform: 'scale(0.88) rotate(' + (dir > 0 ? 6 : -6) + 'deg)' },
+        { opacity: 1, transform: 'scale(1) rotate(0deg)' }
+      ], { duration: 320, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    }
+  }
+
   /* ---------- vaso y mundo físico ---------- */
   function applyCup(i) {
+    restoreCupMode();
     var g = GEOM[i], W = g.w, H = W / g.aspect;
     dims = { g: g, W: W, H: H, cw: W + MARGIN * 2, ch: H + HEAD + FOOT };
     wrap.style.width = W + 'px';
     wrap.style.height = H + 'px';
     wrap.style.marginLeft = (-W / 2) + 'px';
-    img.alt = cfg.names[i] ? 'Vaso ' + cfg.names[i].toLowerCase() : '';
+    if (sh) { sh.style.width = Math.round(W * 0.85) + 'px'; sh.style.marginLeft = Math.round(-W * 0.425) + 'px'; }
+    img.alt = cfg.names[i] ? 'Vaso de fresas con crema tamaño ' + cfg.names[i].toLowerCase() : 'Vaso de fresas con crema';
     img.src = cfg.cups[i];
     img.style.zIndex = 1;
     cv.style.zIndex = g.front ? 2 : 0;
@@ -73,6 +117,8 @@ var Cup = (function () {
   }
 
   function wall(x1, y1, x2, y2, side) {
+    var M = getM();
+    if (!M) return null;
     var T = 40, dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy);
     var nx = -dy / len, ny = dx / len;
     if (nx * side < 0) { nx = -nx; ny = -ny; } /* la normal apunta hacia afuera del vaso */
@@ -81,13 +127,14 @@ var Cup = (function () {
   }
 
   function buildWorld() {
+    var M = getM();
     if (!M) return;
     var g = dims.g;
     engine = M.Engine.create({ enableSleeping: true });
     engine.gravity.y = 1.5;
     engine.positionIterations = 8;
     bodies = [];
-    L = { cream: null, streams: [], until: 0 };
+    L = { cream: null, streams: [], until: 0, parts: [] };
     var T = 40;
     M.Composite.add(engine.world, [
       wall(X(g.topL), Y(g.rimY), X(g.botL), Y(g.floorY), -1),                 /* pared izquierda */
@@ -107,7 +154,7 @@ var Cup = (function () {
     x.scale(DPR, DPR);
     var gr = x.createRadialGradient(r * 0.7, r * 0.6, r * 0.1, r, r, r);
     gr.addColorStop(0, '#eef5a8'); gr.addColorStop(0.6, '#b7cc55'); gr.addColorStop(1, '#7f9a2c');
-    x.fillStyle = gr; x.beginPath(); x.arc(r, r, r - 0.5, 0, 7); x.fill();
+    x.fillStyle = gr; x.beginPath(); x.arc(r, r, r - 0.4, 0, 7); x.fill();
     x.strokeStyle = 'rgba(60,80,10,0.55)'; x.lineWidth = 1; x.stroke();
     x.fillStyle = 'rgba(255,255,255,0.55)'; x.beginPath(); x.ellipse(r * 0.68, r * 0.55, r * 0.22, r * 0.12, -0.6, 0, 7); x.fill();
     return c;
@@ -129,8 +176,9 @@ var Cup = (function () {
   var BERRY = [[-0.47, -0.44], [0.47, -0.44], [0.50, -0.12], [0.36, 0.24], [0.12, 0.5], [-0.12, 0.5], [-0.36, 0.24], [-0.50, -0.12]];
 
   function fruitSprite(shape, im) {
-    var W = dims.W;
-    if (shape === 'berry' && im) {
+    var M = getM();
+    var W = dims ? dims.W : 140;
+    if (shape === 'berry' && im && M && M.Vertices) {
       var w = 0.27 * W, h = w * im.naturalHeight / im.naturalWidth;
       var verts = BERRY.map(function (p) { return { x: p[0] * w, y: p[1] * h }; });
       var c = M.Vertices.centre(verts);
@@ -142,19 +190,23 @@ var Cup = (function () {
 
   /* ---------- cuerpos ---------- */
   function addBody(spr, x, y, tag, angle) {
+    var M = getM();
+    if (!M || !engine) return null;
     var opts = { friction: 0.4, frictionStatic: 0.7, restitution: 0.12, frictionAir: 0.015, density: 0.002, sleepThreshold: 40, angle: angle || 0 };
     var b = spr.verts ? M.Bodies.fromVertices(x, y, [spr.verts], opts) : M.Bodies.circle(x, y, spr.w / 2, opts);
     b.spr = spr; b.tag = tag;
     M.Composite.add(engine.world, b);
     bodies.push(b);
     wake();
+    return b;
   }
 
   function clearBodies() {
+    var M = getM();
     if (!M || !engine) return;
     bodies.forEach(function (b) { M.Composite.remove(engine.world, b); });
     bodies = [];
-    L = { cream: null, streams: [], until: 0 };
+    L = { cream: null, streams: [], until: 0, parts: [] };
     draw();
   }
 
@@ -162,7 +214,8 @@ var Cup = (function () {
     var g = dims.g;
     var wTop = (g.topR - g.topL) * dims.W, wBot = (g.botR - g.botL) * dims.W;
     var area = (wTop + wBot) / 2 * (g.floorY - g.rimY) * dims.H;
-    return Math.min(46, Math.round(area * 0.6 / spr.area) + 3);
+    var maxFruits = isLowEnd ? 20 : 26;
+    return Math.min(maxFruits, Math.round(area * 0.55 / spr.area) + 2);
   }
 
   /* ---------- líquidos: crema, chorros y manchas ---------- */
@@ -198,12 +251,23 @@ var Cup = (function () {
     if (!ctx || !bodies.length) return;
     var g = dims.g, t0 = reduced ? -1e6 : now();
     var target = Math.min(Y(g.floorY) - 4, Math.max(Y(g.rimY) + 2, pileTop() + fruitH * 0.45));
-    L.cream = { t0: t0 + 600, dur: 2100, from: Y(g.floorY), to: target };
+    var cr = L.cream = { t0: t0 + 600, dur: 2100, from: Y(g.floorY), to: target };
     L.streams.push({ cream: true, x: X((g.topL + g.topR) / 2) + rand(-0.04, 0.04) * dims.W, color: '#fffdf7', edge: '#e6d3b8',
       w: 0.11 * dims.W, t0: t0, dur: 2900, endY: pileTop() + fruitH * 0.1 });
     bodies.forEach(function (b) {
       if (b.tag === 'fruit' && b.bounds.min.y < target + fruitH * 0.25) addStain(b, 'cream', '#fffaf0', t0 + 1700 + rand(0, 600), true);
     });
+    /* salpicaduras donde el chorro toca la fruta */
+    var sx = L.streams[L.streams.length - 1].x, sy = L.streams[L.streams.length - 1].endY;
+    if (!reduced) for (var k = 0; k < 9; k++) {
+      (function (k) {
+        setTimeout(function () {
+          if (!L.cream || L.cream !== cr) return;
+          for (var j = 0; j < 3; j++) L.parts.push({ x: sx + rand(-4, 4), y: sy, vx: rand(-45, 45), vy: -rand(40, 110), t0: now(), life: rand(380, 620), r: rand(1.2, 2.6) });
+          wake();
+        }, 640 + k * 190);
+      })(k);
+    }
     until(t0 + 4800); wake();
     if (reduced) draw();
   }
@@ -237,6 +301,22 @@ var Cup = (function () {
     var gr = ctx.createLinearGradient(0, ys, 0, yb);
     gr.addColorStop(0, '#fffdf8'); gr.addColorStop(1, '#f0dcc2');
     ctx.fillStyle = gr; ctx.fill();
+    /* brillo en la superficie, como crema batida recién servida */
+    ctx.beginPath(); ctx.moveTo(xl, ys);
+    for (i = 1; i <= n; i++) ctx.lineTo(xl + (xr - xl) * i / n, ys + Math.sin(i * 1.3 + ph) * amp);
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1.6; ctx.stroke();
+  }
+
+  function drawParts(t) {
+    L.parts = L.parts.filter(function (p) { return t - p.t0 < p.life; });
+    L.parts.forEach(function (p) {
+      var d = (t - p.t0) / 1000, k = (t - p.t0) / p.life;
+      var x = p.x + p.vx * d, y = p.y + p.vy * d + 0.5 * 420 * d * d;
+      ctx.globalAlpha = 1 - k * k;
+      ctx.fillStyle = '#fffdf7'; ctx.strokeStyle = '#e6d3b8'; ctx.lineWidth = 0.7;
+      ctx.beginPath(); ctx.arc(x, y, p.r, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.globalAlpha = 1;
+    });
   }
 
   function drawStains(b, t) {
@@ -326,24 +406,35 @@ var Cup = (function () {
       if (b.stains) drawStains(b, t);
     });
     drawStreams(t, false);
+    drawParts(t);
     ctx.restore();
   }
 
   function tick(t) {
+    var M = getM();
     raf = requestAnimationFrame(tick);
     acc += Math.min(34, t - last); last = t;
-    while (acc >= 16.67) { M.Engine.update(engine, 16.67); acc -= 16.67; }
+    var steps = 0;
+    while (acc >= 16.67 && steps < 2) {
+      if (engine && M) M.Engine.update(engine, 16.67);
+      acc -= 16.67;
+      steps++;
+    }
+    if (steps >= 2) acc = 0; /* evitar espiral de sobrecarga física en celulares lentos */
     draw();
     /* cuando todo quedó quieto (o pasaron 6 s) se apaga el bucle y no se gasta batería */
-    var still = bodies.every(function (b) { return b.isSleeping; });
-    if ((still && t - lastChange > 400 && now() > L.until) || t - lastChange > 7000) { cancelAnimationFrame(raf); raf = 0; }
+    var still = bodies.length > 0 && bodies.every(function (b) { return b.isSleeping; });
+    if ((still && t - lastChange > 400 && now() > L.until) || t - lastChange > 6000) { cancelAnimationFrame(raf); raf = 0; }
   }
   function wake() {
+    var M = getM();
     lastChange = performance.now();
     if (!raf && M && engine) { last = lastChange; acc = 0; raf = requestAnimationFrame(tick); }
   }
   function settleNow() { /* sin animación: se calcula el resultado final de golpe */
-    for (var i = 0; i < 700; i++) M.Engine.update(engine, 16.67);
+    var M = getM();
+    if (!M || !engine) return;
+    for (var i = 0; i < 300; i++) M.Engine.update(engine, 16.67);
     draw();
   }
 
@@ -353,14 +444,22 @@ var Cup = (function () {
     cv.style.opacity = 1;
     var fl = cfg.flavors[cur.flavor].fruit;
     loadImg(fl.img).then(function (im) {
+      var M = getM();
       if (mySeq !== seq || !M) return;
       var spr = fruitSprite(fl.shape, im), n = fruitCount(spr), g = dims.g;
       fruitH = spr.h;
       var x0 = X(g.topL) + spr.w * 0.5, x1 = X(g.topR) - spr.w * 0.5;
       for (var i = 0; i < n; i++) {
         (function (i) {
-          var go = function () { if (mySeq === seq) addBody(spr, rand(x0, x1), reduced ? 10 - i * spr.h : rand(6, 36), 'fruit', rand(-3, 3)); };
-          if (reduced) go(); else setTimeout(go, i * 55);
+          var go = function () {
+            if (mySeq !== seq) return;
+            var b = addBody(spr, rand(x0, x1), reduced ? 10 - i * spr.h : rand(6, 36), 'fruit', rand(-3, 3));
+            if (!reduced) { /* cada pieza cae con su propio impulso y giro: no se ve en fila */
+              M.Body.setVelocity(b, { x: rand(-1.2, 1.2), y: rand(0, 2.5) });
+              M.Body.setAngularVelocity(b, rand(-0.1, 0.1));
+            }
+          };
+          if (reduced) go(); else setTimeout(go, i * 55 + rand(-18, 30) + (i % 3 === 0 ? 40 : 0));
         })(i);
       }
       if (reduced) settleNow();
@@ -391,6 +490,7 @@ var Cup = (function () {
   }
 
   function dropTopping(name) {
+    var M = getM();
     if (!M || !engine) return;
     var t = cfg.toppings.filter(function (x) { return x.name === name; })[0];
     if (!t) return;
@@ -432,6 +532,7 @@ var Cup = (function () {
   }
 
   function removeTopping(name) {
+    var M = getM();
     if (!M || !engine) return;
     L.streams = L.streams.filter(function (st) { return st.tag !== name; });
     bodies.forEach(function (b) { if (b.stains) b.stains = b.stains.filter(function (st) { return st.tag !== name; }); });
@@ -457,6 +558,8 @@ var Cup = (function () {
         { transform: tf(0, 0, 1, 1) },
         { transform: tf(A, -SPIN.hop, 0.88, 1.12) }
       ], { duration: SPIN.outMs, easing: 'cubic-bezier(.55,0,.9,.6)', fill: 'forwards' });
+      /* la sombra del piso se encoge mientras el vaso se levanta y rebota al aterrizar */
+      var sh1 = sh && sh.animate([{ transform: 'scale(1,1)', opacity: 1 }, { transform: 'scale(.55,.8)', opacity: 0.45 }], { duration: SPIN.outMs, easing: 'ease-in', fill: 'forwards' });
       a1.onfinish = function () {
         applyCup(cur.size);
         var e = 'cubic-bezier(.2,.7,.3,1)';
@@ -468,6 +571,10 @@ var Cup = (function () {
           { transform: tf(B, 0, 1, 1) }
         ], { duration: SPIN.inMs });
         a1.cancel();
+        if (sh) {
+          sh.animate([{ transform: 'scale(.55,.8)', opacity: 0.45 }, { transform: 'scale(1.12,1.1)', opacity: 1, offset: 0.7 }, { transform: 'scale(.97,.97)', offset: 0.86 }, { transform: 'scale(1,1)', opacity: 1 }], { duration: SPIN.inMs, easing: 'ease-out' });
+          if (sh1) sh1.cancel();
+        }
         setTimeout(resolve, SPIN.inMs * 0.5); /* la fruta empieza a caer mientras termina de bambolearse */
       };
     });
@@ -475,15 +582,46 @@ var Cup = (function () {
 
   /* ---------- API ---------- */
   function init(opts) {
+    getM();
     cfg = opts;
-    wrap = opts.wrap; img = opts.img; cv = opts.canvas;
+    wrap = opts.wrap; img = opts.img; cv = opts.canvas; sh = opts.shadow || null;
   }
 
-  /* next = { size, flavor, picked: [nombres] }   dir = +1 si el nuevo vaso es más chico, -1 si es más grande */
+  /* next = { size, flavor, specialty, isSpecialty, specialtyItem, picked: [nombres] }
+     dir = +1 si avanza a la siguiente opción, -1 si retrocede */
   function set(next, dir) {
+    getM();
     var prev = cur;
-    cur = { size: next.size, flavor: next.flavor, picked: next.picked.slice() };
-    if (prev.size === null) { applyCup(cur.size); return; }
+    cur = {
+      size: next.size,
+      flavor: next.flavor,
+      specialty: next.specialty || 0,
+      isSpecialty: !!next.isSpecialty,
+      specialtyItem: next.specialtyItem || null,
+      picked: (next.picked || []).slice()
+    };
+
+    // Si la opción seleccionada es una Especialidad:
+    if (cur.isSpecialty) {
+      showSpecialty(cur.specialtyItem, dir || 1);
+      return;
+    }
+
+    // Si veníamos de una especialidad a un vaso tradicional:
+    if (prev.isSpecialty) {
+      restoreCupMode();
+      applyCup(cur.size);
+      var sSpecial = ++seq; started = true;
+      fillAll(sSpecial);
+      return;
+    }
+
+    if (prev.size === null) {
+      restoreCupMode();
+      applyCup(cur.size);
+      return;
+    }
+
     if (cur.size !== prev.size) {
       var s1 = ++seq; started = true;
       spinTo(s1, dir || 1).then(function () { if (s1 === seq) fillAll(s1); });
@@ -491,7 +629,12 @@ var Cup = (function () {
       var s2 = ++seq; started = true;
       cv.style.transition = 'opacity .18s';
       cv.style.opacity = 0;
-      setTimeout(function () { if (s2 === seq) fillAll(s2); }, 200);
+      setTimeout(function () {
+        if (s2 === seq) {
+          cv.style.opacity = 1;
+          fillAll(s2);
+        }
+      }, 200);
     } else if (started) {
       cur.picked.forEach(function (n) { if (prev.picked.indexOf(n) === -1) dropTopping(n); });
       prev.picked.forEach(function (n) { if (cur.picked.indexOf(n) === -1) removeTopping(n); });
@@ -500,7 +643,12 @@ var Cup = (function () {
 
   /* primera vez: la fruta cae cuando el pedido aparece en pantalla */
   function start() {
+    getM();
     if (started || cur.size === null) return;
+    if (cur.isSpecialty) {
+      started = true;
+      return;
+    }
     started = true;
     fillAll(++seq);
   }
